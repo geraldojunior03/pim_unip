@@ -22,9 +22,11 @@ struct Ticket {
 };
 
 struct Visitas {
-    char nomeInstituicao[50];
+    char razaoSocialInstituicao[50];
     char data[20];
     char cnpj[20];
+    char telefone[50];
+    char responsavel[100];
     int qtdePessoas;
 };
 
@@ -135,8 +137,9 @@ int telaOpcoesInicial() {
             printf("4 - Consultar visitas educativas\n");
             printf("5 - Alterar data de visitas educativas\n");
             if (authenticated == 2) {
-                printf("6 - Estorno de ticket\n");
-                printf("7 - Excluir ticket\n");
+                printf("6 - Excluir visita\n");
+                printf("7 - Estorno de ticket\n");
+                printf("8 - Excluir ticket\n");
             }
             printf("0 - Fazer LogOut\n");
             printf("\nEscolha uma opcao: ");
@@ -181,13 +184,47 @@ int telaOpcoesInicial() {
         alterarDataVisita();
         break;
     case 6:
-        system("cls");
-        estornarTicket();
-        break;
+        if(authenticated == 2) {
+            system("cls");
+            excluirVisita();
+            break;
+        }
+        else {
+            system("cls");
+            printf("Opção não reconhecida, tente novamente...\n");
+            Sleep(2000);
+            system("cls");
+            telaOpcoesInicial();
+            break;
+        }
     case 7:
-        system("cls");
-        excluirTicket();
-        break;
+        if(authenticated == 2) {
+            system("cls");
+            estornarTicket();
+            break;
+        }
+        else {
+            system("cls");
+            printf("Opção não reconhecida, tente novamente...\n");
+            Sleep(2000);
+            system("cls");
+            telaOpcoesInicial();
+            break;
+        }
+    case 8:
+        if(authenticated == 2) {
+            system("cls");
+            excluirVisita();
+            break;
+        }
+        else {
+            system("cls");
+            printf("Opção não reconhecida, tente novamente...\n");
+            Sleep(2000);
+            system("cls");
+            telaOpcoesInicial();
+            break;
+        }
     default:
         system("cls");
         printf("Opção não reconhecida, tente novamente...\n");
@@ -519,20 +556,28 @@ int telaAgendarVisitas() {
                     return -1;
                 }
 
-                printf("Nome instituicao: ");
+                printf("Razão social: ");
                 fflush(stdin);  // Limpa o buffer de entrada
-                fgets(visitas.nomeInstituicao, sizeof(visitas.nomeInstituicao), stdin);
-                visitas.nomeInstituicao[strcspn(visitas.nomeInstituicao, "\n")] = '\0';
+                fgets(visitas.razaoSocialInstituicao, sizeof(visitas.razaoSocialInstituicao), stdin);
+                visitas.razaoSocialInstituicao[strcspn(visitas.razaoSocialInstituicao, "\n")] = '\0';
 
                 printf("Data da visita (dd/mm/aaaa): ");
                 fgets(visitas.data, sizeof(visitas.data), stdin);
                 visitas.data[strcspn(visitas.data, "\n")] = '\0';
 
-                printf("CNPJ da instituicao: ");
+                printf("CNPJ da Instituicao: ");
                 fgets(visitas.cnpj, sizeof(visitas.cnpj), stdin);
                 visitas.cnpj[strcspn(visitas.cnpj, "\n")] = '\0';
 
-                fprintf(arquivo, "%s,%s,%s\n", visitas.nomeInstituicao, visitas.data, visitas.cnpj);
+                printf("Nome do responsável: ");
+                fgets(visitas.responsavel, sizeof(visitas.responsavel), stdin);
+                visitas.responsavel[strcspn(visitas.responsavel, "\n")] = '\0';
+
+                printf("Telefone para contato: ");
+                fgets(visitas.telefone, sizeof(visitas.telefone), stdin);
+                visitas.telefone[strcspn(visitas.telefone, "\n")] = '\0';
+
+                fprintf(arquivo, "%s,%s,%s,%s,%s\n", visitas.razaoSocialInstituicao, visitas.data, visitas.cnpj,visitas.responsavel, visitas.telefone);
                 fclose(arquivo);
                 operacaoSucesso();
                 Sleep(2000);
@@ -616,13 +661,17 @@ int consultarVisitasPorCNPJ(const char *cnpjInstituicaoProcurado) {
         char *nomeSalvo = strtok(linha, ",");
         char *dataVisita = strtok(NULL, ",");
         char *cnpjSalvo = strtok(NULL, ",");
+        char *responsavelSalvo = strtok(NULL, ",");
+        char *telefoneSalvo = strtok(NULL, ",");
 
         if (nomeSalvo != NULL && cnpjSalvo != NULL) {
             // Use a função strstr para verificar se o nomeSalvo contém o cnpjInstituicaoProcurado
             if (strstr(cnpjSalvo, cnpjInstituicaoProcurado) != NULL) {
-                printf("Nome: %s\n", nomeSalvo);
+                printf("Razão social: %s\n", nomeSalvo);
                 printf("Data da visita: %s\n", dataVisita);
                 printf("CPF: %s\n", cnpjSalvo);
+                printf("Responsavel: %s\n", responsavelSalvo);
+                printf("Telefone: %s\n", telefoneSalvo);
             }
         }
     }
@@ -702,8 +751,10 @@ void alterarDataVisita() {
                     char nomeInstituicaoSalvo[50];
                     char dataVisitaSalva[20];
                     char cnpjSalvo[15];
+                    char responsavelSalvo[100];
+                    char telefoneSalvo[50];
 
-                    if (sscanf(linha, "%49[^,],%19[^,],%14[^,]", nomeInstituicaoSalvo, dataVisitaSalva, cnpjSalvo) == 3) {
+                    if (sscanf(linha, "%49[^,],%19[^,],%14[^,],%99[^,],%49[^,]", nomeInstituicaoSalvo, dataVisitaSalva, cnpjSalvo, responsavelSalvo, telefoneSalvo) == 5) {
                         char cnpjSalvoSemEspacos[15];
                         limparEspacos(cnpjSalvo, cnpjSalvoSemEspacos);
 
@@ -713,7 +764,9 @@ void alterarDataVisita() {
                             printf("Estes foram todos os resultados para o CNPJ: \"%s\":\n\n", cnpjInstituicao);
                             printf("Nome: %s\n", nomeInstituicaoSalvo);
                             printf("Data de Visita: %s\n", dataVisitaSalva);
-                            printf("CNPJ: %s\n\n", cnpjSalvo);
+                            printf("CNPJ: %s\n", cnpjSalvo);
+                            printf("Responsavel: %s\n", responsavelSalvo);
+                            printf("Telefone: %s\n\n", telefoneSalvo);
                         }
                     }
                 }
@@ -735,21 +788,23 @@ void alterarDataVisita() {
 
                 // Copia as linhas para o arquivo temporário com as alterações necessárias
                 while (fgets(linha, sizeof(linha), arquivo) != NULL) {
-                    char cnpjSalvo[15];
                     char nomeInstituicaoSalvo[50];
                     char dataVisita[20];
+                    char cnpjSalvo[15];
+                    char responsavelSalvo[100];
+                    char telefoneSalvo[50];
 
-                    if (sscanf(linha, "%49[^,],%19[^,],%14[^,]", nomeInstituicaoSalvo, dataVisita, cnpjSalvo) == 3) {
+                    if (sscanf(linha, "%49[^,],%19[^,],%14[^,],%99[^,],%49[^,]", nomeInstituicaoSalvo, dataVisita, cnpjSalvo, responsavelSalvo, telefoneSalvo) == 5) {
                         char cnpjSalvoSemEspacos[15];
                         limparEspacos(cnpjSalvo, cnpjSalvoSemEspacos);
 
                         if (strcmp(cnpjSalvoSemEspacos, cnpjInstituicao) == 0) {
                             // Se o CNPJ for encontrado, altera a data
-                            fprintf(tempArquivo, "%s,%s,%s\n", nomeInstituicaoSalvo, novaData, cnpjSalvo);
+                            fprintf(tempArquivo, "%s,%s,%s,%s,%s\n", nomeInstituicaoSalvo, novaData, cnpjSalvo, responsavelSalvo, telefoneSalvo);
                             alteracaoRealizada = 1;
                         } else {
                             // Se não for o CNPJ procurado, mantém a linha inalterada
-                            fprintf(tempArquivo, "%s,%s,%s\n", nomeInstituicaoSalvo, dataVisita, cnpjSalvo);
+                            fprintf(tempArquivo, "%s,%s,%s,%s,%s\n", nomeInstituicaoSalvo, dataVisita, cnpjSalvo, responsavelSalvo, telefoneSalvo);
                         }
                     }
                 }
@@ -763,8 +818,12 @@ void alterarDataVisita() {
 
                 if (alteracaoRealizada) {
                     printf("Data da visita alterada com sucesso.\n");
+                    printf("Pressione F2 para retornar ao menu inicial.");
                 } else {
-                    printf("Nenhuma alteração realizada.\n");
+                    printf("\nNão foi possível realizar alterações.");
+                    Sleep(2000);
+                    system("cls");
+                    alterarDataVisita();
                 }
             } else if (choice == 60) { // F2
                 system("cls");
@@ -779,6 +838,155 @@ void alterarDataVisita() {
                 printf("F2 - Retornar ao menu global.\n");
             }
         }
+    }
+}
+
+int excluirVisita() {
+    int mensagemExcluirTicket() {
+        printf("========================================================================================================================");
+        printf("========================================================================================================================");
+        printf("\n\n\t\t\t\t\t\tEXCLUSÃO DE UMA VISITA\n");
+        printf("\t\t\t\t\tSEJA BEM-VINDO AO MENU DE EXCLUSÃO DE VISITAS\n\n");
+        printf("========================================================================================================================");
+        printf("========================================================================================================================\n\n");
+    }
+
+    confirmarOperacao();
+
+    while (1) {
+        choice = getch(); // Obtém a tecla pressionada
+
+        if (choice == 0) {
+            choice = getch();
+
+            if (choice == 59) { // F1
+                system("cls");
+                char cnpjInstituicao[50]; // Aumente o tamanho para acomodar nome e sobrenome
+
+                mensagemExcluirTicket();
+
+                printf("Digite o CNPJ da Instituição para excluir: ");
+                scanf(" %[^\n]", cnpjInstituicao); // Use %[^\n] para ler toda a linha, incluindo espaços
+                excluirLinhaVisita(cnpjInstituicao);
+            }
+
+            else if(choice == 60) {
+                system("cls");
+                printf("Retornando ao menu principal...\n");
+                Sleep(2000);
+                telaOpcoesInicial();
+            }
+            else {
+                system("cls");
+                confirmarOperacao();
+                printf("Desculpe, mas essa tecla nao corresponde as opcoes, pressione:\n");
+                printf("F1 - Prosseguir com o agendamento;\n");
+                printf("F2 - Retornar ao menu global.\n");
+            }
+        }
+    }
+}
+
+void excluirLinhaVisita(const char *cnpjInstituicaoExcluir) {
+    FILE *arquivo = fopen("visitas.csv", "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
+    }
+
+    FILE *tempArquivo = fopen("temp.csv", "w");
+    if (tempArquivo == NULL) {
+        printf("Erro ao criar arquivo temporário.\n");
+        fclose(arquivo);
+        return;
+    }
+
+    char linha[256];
+    int linhaEncontrada = 0;
+
+    // Pergunta de confirmação
+    char confirmacao;
+
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+        // Copia a linha original para manter os dados intactos
+        char linhaTemp[256];
+        strcpy(linhaTemp, linha);
+
+        // Usa a função strtok para separar os dados
+        char *dados[5]; // Assumindo que há no máximo 10 campos por linha
+        int i = 0;
+        char *token = strtok(linhaTemp, ",");
+        while (token != NULL && i < 5) {
+            dados[i++] = token;
+            token = strtok(NULL, ",");
+        }
+
+        // Verifica se o ID do Ticket corresponde ao fornecido
+        if (i >= 3 && strcmp(dados[2], cnpjInstituicaoExcluir) == 0) {
+            linhaEncontrada = 1;
+
+            // Exibe os dados da linha antes de excluí-la
+            printf("Estes são os dados da Instituicao com CNPJ %s:\n\n", cnpjInstituicaoExcluir);
+            printf("Razão Social: %s\n", dados[0]);
+            printf("Data da visita: %s\n", dados[1]);
+            printf("CNPJ Instituição: %s\n", dados[2]);
+            printf("Responsável: %s\n", dados[3]);
+            printf("Telefone: %s\n", dados[4]);
+
+            printf("Deseja realmente excluir este Ticket? (S/N): ");
+            scanf(" %c", &confirmacao);
+
+            if (confirmacao == 'S' || confirmacao == 's') {
+                // Não copia a linha para o arquivo temporário, efetivamente excluindo-a
+            } else {
+                // Mantém as outras linhas no arquivo temporário
+                fprintf(tempArquivo, "%s", linha);
+            }
+        } else {
+            // Mantém as outras linhas no arquivo temporário
+            fprintf(tempArquivo, "%s", linha);
+        }
+    }
+
+    fclose(arquivo);
+    fclose(tempArquivo);
+
+    if (linhaEncontrada) {
+        // Remove o arquivo original e renomeia o temporário
+        remove("visitas.csv");
+        rename("temp.csv", "visitas.csv");
+
+        if (confirmacao == 'S' || confirmacao == 's') {
+            printf("Linha excluída com sucesso.\n");
+        }
+        else {
+            printf("Exclusão cancelada.");
+        }
+        printf("\nPressione F2 para retornar ao menu inicial.");
+        int choice;
+
+        while (1) {
+            choice = getch(); // Obtém a tecla pressionada
+
+            if (choice == 0) {
+                choice = getch();
+
+                if (choice == 60) {
+                    system("cls");
+                    printf("Retornando ao menu principal...");
+                    Sleep(2000);
+                    system("cls");
+                    telaOpcoesInicial();
+                } else {
+                    printf("\n\nDesculpe, opção inválida.\n");
+                    printf("Pressione F2 para retornar ao menu inicial.");
+                }
+            }
+        }
+
+    } else {
+        printf("ID do Ticket não encontrado. Nenhuma alteração realizada.\n");
+        remove("temp.csv"); // Remove o arquivo temporário, pois não é necessário neste caso
     }
 }
 
@@ -851,66 +1059,68 @@ void consultarDadosPorIDTicket(const char *idTicketProcurado) {
         char *dataCompra = strtok(NULL, ",");
         char *statusTicket = strtok(NULL, ",");
 
-        if (idTicket != NULL && strcmp(idTicket, idTicketProcurado) == 0) {
-            // Ticket encontrado, exibe os dados
-            printf("Nome: %s\n", nomeSalvo);
-            printf("Data de Nascimento: %s\n", dataNasc);
-            printf("CPF: %s\n", cpfSalvo);
-            // Deixando o valor do celular inexistente para N/A quando impresso
-            if (strcmp(celular, "000000000000") == 0) {
-                printf("Celular: N/A\n");
-            }
-            else {
-                printf("Celular: %s\n", celular);
-            }
+        if(strcmp(statusTicket, "E") == 0) {
+            if (idTicket != NULL && strcmp(idTicket, idTicketProcurado) == 0) {
+                // Ticket encontrado, exibe os dados
+                printf("Nome: %s\n", nomeSalvo);
+                printf("Data de Nascimento: %s\n", dataNasc);
+                printf("CPF: %s\n", cpfSalvo);
+                // Deixando o valor do celular inexistente para N/A quando impresso
+                if (strcmp(celular, "000000000000") == 0) {
+                    printf("Celular: N/A\n");
+                }
+                else {
+                    printf("Celular: %s\n", celular);
+                }
 
-            // Deixando o valor da carteira de estudante inexistente para N/A quando impresso
-            if (strcmp(carteiraEstudante, "000000000000") == 0) {
-                printf("Carteira de Estudante: N/A\n");
-            }
-            else {
-                printf("Carteira de Estudante: %s\n", carteiraEstudante);
-            }
-            printf("Valor do Ticket: R$%s,00\n", valorTicket);
-            printf("ID do Ticket: %s\n", idTicket);
-            printf("ID da Transação: %s\n", idTransacao);
-            if (dataCompra != NULL) {
-                printf("Data da compra: %s\n", dataCompra);
-            }
-            if (statusTicket != NULL) {
-                printf("Status Ticket: %s\n", statusTicket);
+                // Deixando o valor da carteira de estudante inexistente para N/A quando impresso
+                if (strcmp(carteiraEstudante, "000000000000") == 0) {
+                    printf("Carteira de Estudante: N/A\n");
+                }
+                else {
+                    printf("Carteira de Estudante: %s\n", carteiraEstudante);
+                }
+                printf("Valor do Ticket: R$%s,00\n", valorTicket);
+                printf("ID do Ticket: %s\n", idTicket);
+                printf("ID da Transação: %s\n", idTransacao);
+                if (dataCompra != NULL) {
+                    printf("Data da compra: %s\n", dataCompra);
+                }
+                if (statusTicket != NULL) {
+                    printf("Status Ticket: %s\n", statusTicket);
 
-                printf("Para prosseguir com o estorno, aperta F1\n");
-                printf("Se não gostaria de prosseguir com o estorno, pressione F2\n\n");
+                    printf("Para prosseguir com o estorno, aperta F1\n");
+                    printf("Se não gostaria de prosseguir com o estorno, pressione F2\n\n");
 
-                int choice;
-                while (1) {
-                    choice = getch(); // Obtém a tecla pressionada
+                    int choice;
+                    while (1) {
+                        choice = getch(); // Obtém a tecla pressionada
 
-                    if (choice == 0) {
-                        choice = getch();
+                        if (choice == 0) {
+                            choice = getch();
 
-                        if (choice == 59) { // F1
-                            // Estornar o ticket
-                            posicaoInicial = ftell(arquivo) - strlen(statusTicket) - 1;
-                            fseek(arquivo, posicaoInicial, SEEK_SET);
-                            fprintf(arquivo, "E");
-                            printf("Ticket estornado com sucesso!\n");
-                            break; // Sai do loop após estornar o ticket
-                        } else if (choice == 60) {
-                            system("cls");
-                            printf("Retornando ao menu principal...");
-                            Sleep(2000);
-                            system("cls");
-                            telaOpcoesInicial();
-                        } else {
-                            printf("\nOpção inválida. Pressione F1 para confirmar o estorno.\n");
+                            if (choice == 59) { // F1
+                                // Estornar o ticket
+                                posicaoInicial = ftell(arquivo) - strlen(statusTicket) - 1;
+                                fseek(arquivo, posicaoInicial, SEEK_SET);
+                                fprintf(arquivo, "E");
+                                printf("Ticket estornado com sucesso!\n");
+                                break; // Sai do loop após estornar o ticket
+                            } else if (choice == 60) {
+                                system("cls");
+                                printf("Retornando ao menu principal...");
+                                Sleep(2000);
+                                system("cls");
+                                telaOpcoesInicial();
+                            } else {
+                                printf("\nOpção inválida. Pressione F1 para confirmar o estorno.\n");
+                            }
                         }
                     }
                 }
-            }
             // Não é necessário continuar a busca após encontrar o ticket
             break;
+            }
         }
     }
 
@@ -1005,6 +1215,9 @@ void excluirLinhaEExibirDados(const char *idTicketExcluir) {
     char linha[256];
     int linhaEncontrada = 0;
 
+    // Pergunta de confirmação
+    char confirmacao;
+
     while (fgets(linha, sizeof(linha), arquivo) != NULL) {
         // Copia a linha original para manter os dados intactos
         char linhaTemp[256];
@@ -1052,9 +1265,6 @@ void excluirLinhaEExibirDados(const char *idTicketExcluir) {
             if (dados[9] != NULL) {
                 printf("Status Ticket: %s\n", dados[9]);
             }
-
-            // Pergunta de confirmação
-            char confirmacao;
             printf("Deseja realmente excluir este Ticket? (S/N): ");
             scanf(" %c", &confirmacao);
 
@@ -1078,7 +1288,12 @@ void excluirLinhaEExibirDados(const char *idTicketExcluir) {
         remove("dados.csv");
         rename("temp.csv", "dados.csv");
 
-        printf("Linha excluída com sucesso.\n");
+        if (confirmacao == 'S' || confirmacao == 's') {
+            printf("Linha excluída com sucesso.\n");
+        }
+        else {
+            printf("Exclusão cancelada.");
+        }
         printf("\nPressione F2 para retornar ao menu inicial.");
         int choice;
 
